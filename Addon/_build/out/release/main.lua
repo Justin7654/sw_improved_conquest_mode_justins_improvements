@@ -14547,7 +14547,7 @@ function tickVehicles(game_ticks)
 				end
 
 				-- check if the vehicle has sunk or is under water
-				if vehicle_object.transform[14] <= vehicle_obect.sink_depth/modifier then --explosion_depths[vehicle_object.vehicle_type]/modifier then
+				if vehicle_object.transform[14] <= vehicle_object.sink_depth/modifier then --explosion_depths[vehicle_object.vehicle_type]/modifier then
 					if vehicle_object.role ~= SQUAD.COMMAND.CARGO then
 						if vehicle_object.vehicle_type == VEHICLE.TYPE.BOAT then
 							vehicle_object.sinking_counter = (vehicle_object.sinking_counter or 0) + 1
