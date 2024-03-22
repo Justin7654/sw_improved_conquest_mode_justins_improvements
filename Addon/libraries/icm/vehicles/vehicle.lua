@@ -818,6 +818,7 @@ function Vehicle.spawn(requested_prefab, vehicle_type, force_spawn, specified_is
 			just_strafed = true, -- used for fighter jet strafing
 			---@type string
 			strategy = Tags.getValue(selected_prefab.vehicle.tags, "strategy", true) --[[@as string]] or "general",
+			sink_depth = tonumber(Tags.getValue(selected_prefab.vehicle.tags, "sink_depth", true) or explosion_depths[spawned_objects.spawned_vehicle.vehicle_type] or -4),
 			can_offroad = Tags.has(selected_prefab.vehicle.tags, "can_offroad"),
 			is_resupply_on_load = false,
 			transform = spawn_transform --[[@as SWMatrix]],

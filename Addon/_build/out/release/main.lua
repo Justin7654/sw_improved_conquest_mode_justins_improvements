@@ -1,20 +1,3 @@
---[[
-	
-Copyright 2024 Liam Matthews
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-	http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-]]
  
 --[[
 	
@@ -3174,7 +3157,7 @@ function Debugging.handleDebug(debug_type, enabled, peer_id)
 			local start_traceback_setup_time = s.getTimeMillisec()
 
 			-- modify all functions in _ENV to have the debug "injected"
-			--_ENV = setupTraceback(table.copy.deep(_ENV))
+			_ENV = setupTraceback(table.copy.deep(_ENV))
 
 			d.print(("Completed setting up tracebacks! took %ss"):format((s.getTimeMillisec() - start_traceback_setup_time)*0.001), true, 8)
 
@@ -8865,6 +8848,7 @@ function Vehicle.spawn(requested_prefab, vehicle_type, force_spawn, specified_is
 			just_strafed = true, -- used for fighter jet strafing
 			---@type string
 			strategy = Tags.getValue(selected_prefab.vehicle.tags, "strategy", true) --[[@as string]] or "general",
+			sink_depth = tonumber(Tags.getValue(selected_prefab.vehicle.tags, "sink_depth", true) or explosion_depths[spawned_objects.spawned_vehicle.vehicle_type] or -4),
 			can_offroad = Tags.has(selected_prefab.vehicle.tags, "can_offroad"),
 			is_resupply_on_load = false,
 			transform = spawn_transform --[[@as SWMatrix]],
@@ -14290,6 +14274,10 @@ function tickVision(game_ticks)
 	end
 
 	-- analyse player vehicles
+	--[[
+		Issue: this is looping through each sub body on player vehicles, and then with a nested loop
+		looping through each AI vehicle causing lag
+	--]]
 	for player_vehicle_id, player_vehicle in pairs(g_savedata.player_vehicles) do
 		local player_vehicle_transform = player_vehicle.transform
 
@@ -14559,7 +14547,7 @@ function tickVehicles(game_ticks)
 				end
 
 				-- check if the vehicle has sunk or is under water
-				if vehicle_object.transform[14] <= explosion_depths[vehicle_object.vehicle_type]/modifier then
+				if vehicle_object.transform[14] <= vehicle_obect.sink_depth/modifier then --explosion_depths[vehicle_object.vehicle_type]/modifier then
 					if vehicle_object.role ~= SQUAD.COMMAND.CARGO then
 						if vehicle_object.vehicle_type == VEHICLE.TYPE.BOAT then
 							vehicle_object.sinking_counter = (vehicle_object.sinking_counter or 0) + 1

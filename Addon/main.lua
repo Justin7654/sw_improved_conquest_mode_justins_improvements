@@ -3646,6 +3646,10 @@ function tickVision(game_ticks)
 	end
 
 	-- analyse player vehicles
+	--[[
+		Issue: this is looping through each sub body on player vehicles, and then with a nested loop
+		looping through each AI vehicle causing lag
+	--]]
 	for player_vehicle_id, player_vehicle in pairs(g_savedata.player_vehicles) do
 		local player_vehicle_transform = player_vehicle.transform
 
@@ -3915,7 +3919,7 @@ function tickVehicles(game_ticks)
 				end
 
 				-- check if the vehicle has sunk or is under water
-				if vehicle_object.transform[14] <= explosion_depths[vehicle_object.vehicle_type]/modifier then
+				if vehicle_object.transform[14] <= vehicle_obect.sink_depth/modifier then --explosion_depths[vehicle_object.vehicle_type]/modifier then
 					if vehicle_object.role ~= SQUAD.COMMAND.CARGO then
 						if vehicle_object.vehicle_type == VEHICLE.TYPE.BOAT then
 							vehicle_object.sinking_counter = (vehicle_object.sinking_counter or 0) + 1
