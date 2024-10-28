@@ -2892,7 +2892,8 @@ function tickSquadrons(game_ticks)
 			else
 				for vehicle_id, vehicle_object in pairs(squad.vehicles) do
 					if (vehicle_object.state.is_simulating and isVehicleNeedsResupply(vehicle_id, "Resupply") == false) or (not vehicle_object.state.is_simulating and vehicle_object.is_resupply_on_load) then
-	
+						--isVehicleNeedsResupply is returning false for some reason
+						
 						transferToSquadron(vehicle_object, vehicle_object.previous_squad, true)
 
 						d.print(vehicle_id.." resupplied. joining squad", true, 0)
@@ -3653,53 +3654,53 @@ function tickVision(game_ticks)
 	for player_vehicle_id, player_vehicle in pairs(g_savedata.player_vehicles) do
 		local player_vehicle_transform = player_vehicle.transform
 
-		for squad_index, squad in pairs(g_savedata.ai_army.squadrons) do
-			if squad_index ~= RESUPPLY_SQUAD_INDEX then
-				-- reset target visibility state to investigate
-
-				if squad.target_vehicles[player_vehicle_id] ~= nil then
-					if player_vehicle.death_pos == nil then
-						squad.target_vehicles[player_vehicle_id].state = TARGET_VISIBILITY_INVESTIGATE
-					else
-						squad.target_vehicles[player_vehicle_id] = nil
-					end
-				end
-
-				-- check if target is visible to any vehicles
-				for vehicle_id, vehicle_object in pairs(squad.vehicles) do
-					local vehicle_transform = vehicle_object.transform
-
-					if vehicle_transform ~= nil and player_vehicle_transform ~= nil then
-						local distance = m.distance(player_vehicle_transform, vehicle_transform)
-
-						local local_vision_radius = vehicle_object.vision.radius
-
-						if not vehicle_object.vision.is_sonar and player_vehicle_transform[14] < -1 then
-							-- if the player is in the water, and the player is below y -1, then reduce the player's sight level depending on the player's depth
-							local_vision_radius = local_vision_radius * math.min(0.15 / (math.abs(player_vehicle_transform[14]) * 0.2), 0.15)
+		if isTickID(player_vehicle_id, 10) then
+			for squad_index, squad in pairs(g_savedata.ai_army.squadrons) do
+				if squad_index ~= RESUPPLY_SQUAD_INDEX then
+					-- reset target visibility state to investigate
+	
+					if squad.target_vehicles[player_vehicle_id] ~= nil then
+						if player_vehicle.death_pos == nil then
+							squad.target_vehicles[player_vehicle_id].state = TARGET_VISIBILITY_INVESTIGATE
+						else
+							squad.target_vehicles[player_vehicle_id] = nil
 						end
-						
-						if distance < local_vision_radius and player_vehicle.death_pos == nil then
-							if squad.target_vehicles[player_vehicle_id] == nil then
-								---@class TargetVehicle
-								squad.target_vehicles[player_vehicle_id] = {
-									state = TARGET_VISIBILITY_VISIBLE,
-									last_known_pos = player_vehicle_transform
-								}
-							else
-								local target_vehicle = squad.target_vehicles[player_vehicle_id]
-								target_vehicle.state = TARGET_VISIBILITY_VISIBLE
-								target_vehicle.last_known_pos = player_vehicle_transform
+					end
+	
+					-- check if target is visible to any vehicles
+					for vehicle_id, vehicle_object in pairs(squad.vehicles) do
+						local vehicle_transform = vehicle_object.transform
+	
+						if vehicle_transform ~= nil and player_vehicle_transform ~= nil then
+							local distance = m.distance(player_vehicle_transform, vehicle_transform)
+	
+							local local_vision_radius = vehicle_object.vision.radius
+	
+							if not vehicle_object.vision.is_sonar and player_vehicle_transform[14] < -1 then
+								-- if the player is in the water, and the player is below y -1, then reduce the player's sight level depending on the player's depth
+								local_vision_radius = local_vision_radius * math.min(0.15 / (math.abs(player_vehicle_transform[14]) * 0.2), 0.15)
 							end
-
-							break
+							
+							if distance < local_vision_radius and player_vehicle.death_pos == nil then
+								if squad.target_vehicles[player_vehicle_id] == nil then
+									---@class TargetVehicle
+									squad.target_vehicles[player_vehicle_id] = {
+										state = TARGET_VISIBILITY_VISIBLE,
+										last_known_pos = player_vehicle_transform
+									}
+								else
+									local target_vehicle = squad.target_vehicles[player_vehicle_id]
+									target_vehicle.state = TARGET_VISIBILITY_VISIBLE
+									target_vehicle.last_known_pos = player_vehicle_transform
+								end
+	
+								break
+							end
 						end
 					end
 				end
 			end
-		end
-
-		if isTickID(player_vehicle_id, 240) then
+		elseif isTickID(player_vehicle_id, 240) then
 			if player_vehicle.death_pos ~= nil then
 				if m.distance(player_vehicle.death_pos, player_vehicle_transform) > 500 then
 					local player_vehicle_data, is_success = s.getVehicleData(player_vehicle_id)
