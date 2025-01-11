@@ -3700,7 +3700,9 @@ function tickVision(game_ticks)
 					end
 				end
 			end
-		elseif isTickID(player_vehicle_id, 240) then
+		end
+			
+		if isTickID(player_vehicle_id, 240) then
 			if player_vehicle.death_pos ~= nil then
 				if m.distance(player_vehicle.death_pos, player_vehicle_transform) > 500 then
 					local player_vehicle_data, is_success = s.getVehicleData(player_vehicle_id)
