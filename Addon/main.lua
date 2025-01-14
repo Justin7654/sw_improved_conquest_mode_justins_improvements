@@ -1805,7 +1805,19 @@ function onVehicleLoad(vehicle_id)
 
 		if vehicle_object.is_resupply_on_load then
 			vehicle_object.is_resupply_on_load = false
-			reload(group_id)
+			
+			--Reset the vehicle state and reload
+			local main_vehicle_id = VehicleGroup.getMainVehicle(group_id)
+					
+			-- Ensure we got the main_vehicle_id
+			if main_vehicle_id then
+				-- resetVehicleState current issues: it unseats all its crew, and other bodys inside it like missiles or torpedos will fall out or end up glitched inside it.
+				-- also only works when the vehicles loaded
+				-- s.resetVehicleState(main_vehicle_id)
+				reload(main_vehicle_id)
+			else
+				d.print(("failed to resupply because main_vehicle_id is nil! group_id: %s"):format(group_id), true, 1)
+			end
 		end
 
 		d.print("(onVehicleLoad) #of survivors: "..tostring(#vehicle_object.survivors), true, 0)
@@ -3356,7 +3368,6 @@ function tickSquadrons(game_ticks)
 							-- resupply ammo
 							reload(main_vehicle_id)
 						else
-							s.resetVehicleState(main_vehicle_id)
 							vehicle_object.is_resupply_on_load = true
 						end
 					end
@@ -3369,7 +3380,6 @@ function tickSquadrons(game_ticks)
 									-- resupply ammo
 									reload(main_vehicle_id)
 								else
-									s.resetVehicleState(main_vehicle_id)
 									vehicle_object.is_resupply_on_load = true
 								end
 							end
