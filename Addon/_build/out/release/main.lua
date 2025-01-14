@@ -13962,9 +13962,17 @@ function tickSquadrons(game_ticks)
 			elseif squad.command == SQUAD.COMMAND.RESUPPLY then
 
 				g_savedata.ai_army.squadrons[RESUPPLY_SQUAD_INDEX].target_island = nil
-				for vehicle_id, vehicle_object in pairs(squad.vehicles) do
+				for group_id, vehicle_object in pairs(squad.vehicles) do
+					local main_vehicle_id = VehicleGroup.getMainVehicle(group_id)
+					
+					-- Ensure we got the main_vehicle_id
+					if not main_vehicle_id then
+						d.print(("main_vehicle_id is nil! group_id: %s"):format(group_id), true, 1)
+						goto continue_vehicle
+					end
+
 					if #vehicle_object.path == 0 then
-						d.print("resupply mission recalculating target island for: "..vehicle_id, true, 0)
+						d.print("resupply mission recalculating target island for: "..group_id, true, 0)
 						local ally_island = getResupplyIsland(vehicle_object.transform)
 						p.resetPath(vehicle_object)
 						p.addPath(vehicle_object, m.multiply(ally_island.transform, m.translation(math.random(-250, 250), CRUISE_HEIGHT + (vehicle_object.group_id % 10 * 20), math.random(-250, 250))))
@@ -13974,9 +13982,9 @@ function tickSquadrons(game_ticks)
 
 						if vehicle_object.state.is_simulating then
 							-- resupply ammo
-							reload(vehicle_id)
+							reload(main_vehicle_id)
 						else
-							s.resetVehicleState(vehicle_id)
+							s.resetVehicleState(main_vehicle_id)
 							vehicle_object.is_resupply_on_load = true
 						end
 					end
@@ -13987,14 +13995,16 @@ function tickSquadrons(game_ticks)
 
 								if vehicle_object.state.is_simulating then
 									-- resupply ammo
-									reload(vehicle_id)
+									reload(main_vehicle_id)
 								else
-									s.resetVehicleState(vehicle_id)
+									is_success = s.resetVehicleState(main_vehicle_id)
+									d.print("is_success resetting state: "..tostring(is_success)) --true
 									vehicle_object.is_resupply_on_load = true
 								end
 							end
 						end
 					end
+					::continue_vehicle::
 				end
 
 			elseif squad.command == SQUAD.COMMAND.INVESTIGATE then
