@@ -2890,13 +2890,24 @@ function tickSquadrons(game_ticks)
 					::next_vehicle::
 				end
 			else
-				for vehicle_id, vehicle_object in pairs(squad.vehicles) do
-					if (vehicle_object.state.is_simulating and isVehicleNeedsResupply(vehicle_id, "Resupply") == false) or (not vehicle_object.state.is_simulating and vehicle_object.is_resupply_on_load) then
+				for group_id, vehicle_object in pairs(squad.vehicles) do
+
+					-- Get the main vehicle_id.
+					local main_vehicle_id = VehicleGroup.getMainVehicle(group_id)
+
+					-- Ensure we got the main vehicle_id
+					if not main_vehicle_id then
+						-- skip this vehicle if we failed to get it.
+						goto next_vehicle
+					end
+
+					if (vehicle_object.state.is_simulating and isVehicleNeedsResupply(main_vehicle_id, "Resupply") == false) or (not vehicle_object.state.is_simulating and vehicle_object.is_resupply_on_load) then
 	
 						transferToSquadron(vehicle_object, vehicle_object.previous_squad, true)
 
-						d.print(vehicle_id.." resupplied. joining squad", true, 0)
+						d.print(group_id.." resupplied. joining squad", true, 0)
 					end
+					::next_vehicle::
 				end
 			end
 
@@ -4313,8 +4324,10 @@ function tickVehicles(game_ticks)
 					end
 
 					if vehicle_object.state.is_simulating then
+						local main_vehicle_id = VehicleGroup.getMainVehicle(group_id)
+						local needsResupply = not main_vehicle_id and "main_vehicle_id not found" or isVehicleNeedsResupply(main_vehicle_id, "Resupply")
 						debug_data = debug_data .. "\nSIMULATING\n"
-						debug_data = debug_data .. "needs resupply: " .. tostring(isVehicleNeedsResupply(group_id, "Resupply")) .. "\n"
+						debug_data = debug_data .. "needs resupply: " .. tostring(needsResupply) .. "\n"
 					else
 						debug_data = debug_data .. "\nPSEUDO\n"
 						debug_data = debug_data .. "resupply on load: " .. tostring(vehicle_object.is_resupply_on_load) .. "\n"
