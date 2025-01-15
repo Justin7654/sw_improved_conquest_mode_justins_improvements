@@ -9400,38 +9400,38 @@ function Cargo.getEscortWeight(cargo_vehicle, escort_vehicle) --* get the weight
 	return weight
 end
 
---- @param vehicle_id number the vehicle's id
+--- @param group_id number the group's id
 --- @return table|nil cargo the contents of the cargo vehicle's tanks
 --- @return boolean got_tanks wether or not we were able to get the tanks
-function Cargo.getTank(vehicle_id)
+function Cargo.getTank(group_id)
 
-	if not vehicle_id then
+	if not group_id then
 		d.print("(Cargo.getTank) vehicle_id is nil!", true, 0)
 		return nil, false
 	end
 
-	if not g_savedata.cargo_vehicles[vehicle_id] then
-		d.print("(Cargo.getTank) "..vehicle_id.." is not a cargo vehicle!", true, 0)
+	if not g_savedata.cargo_vehicles[group_id] then
+		d.print("(Cargo.getTank) "..group_id.." is not a cargo vehicle!", true, 0)
 		return nil, false
 	end
 
 	---@type requestedCargo
 	local cargo = {
 		[1] = {
-			cargo_type = g_savedata.cargo_vehicles[vehicle_id].requested_cargo[1].cargo_type,
+			cargo_type = g_savedata.cargo_vehicles[group_id].requested_cargo[1].cargo_type,
 			amount = 0
 		},
 		[2] = {
-			cargo_type = g_savedata.cargo_vehicles[vehicle_id].requested_cargo[2].cargo_type,
+			cargo_type = g_savedata.cargo_vehicles[group_id].requested_cargo[2].cargo_type,
 			amount = 0
 		},
 		[3] = {
-			cargo_type = g_savedata.cargo_vehicles[vehicle_id].requested_cargo[3].cargo_type,
+			cargo_type = g_savedata.cargo_vehicles[group_id].requested_cargo[3].cargo_type,
 			amount = 0
 		}
 	}
 
-	local vehicle_object, squad_index, squad = Squad.getVehicle(vehicle_id)
+	local vehicle_object, squad_index, squad = Squad.getVehicle(group_id)
 
 	if not vehicle_object then
 		d.print("(Cargo.getTank) vehicle_object is nil!", true, 0)
@@ -9444,10 +9444,18 @@ function Cargo.getTank(vehicle_id)
 
 	--d.print("(Cargo.getTank) cargo_tanks_per_set: "..tonumber(cargo_tanks_per_set), true, 0)
 
+	local main_vehicle_id = VehicleGroup.getMainVehicle(group_id)
+
+	-- ensure we got the main_vehicle_id
+	if not main_vehicle_id then
+		d.print("(Cargo.getTank) main_vehicle_id is nil", true, 1)
+		return cargo, false
+	end
+
 	for tank_set=0, 2 do
 		for tank_index=0, cargo_tanks_per_set-1 do
 
-			local tank_data, got_data = s.getVehicleTank(vehicle_id, "RESOURCE_TYPE_"..tank_set.."_"..tank_index)
+			local tank_data, got_data = s.getVehicleTank(main_vehicle_id, "RESOURCE_TYPE_"..tank_set.."_"..tank_index)
 
 			if got_data then
 				if tank_data.value > 0 then
@@ -9457,7 +9465,7 @@ function Cargo.getTank(vehicle_id)
 					d.print("(Cargo.getTank) Tank is empty.\ntank_set: "..tank_set.." tank_index: "..tank_index, true, 1)]]
 				end
 			else
-				d.print("(Cargo.getTank) Error getting tank data for "..vehicle_id.." Tank set: "..tank_set.." Tank index: "..tank_index, true, 1)
+				d.print("(Cargo.getTank) Error getting tank data for "..main_vehicle_id.." Tank set: "..tank_set.." Tank index: "..tank_index, true, 1)
 			end
 		end
 	end
