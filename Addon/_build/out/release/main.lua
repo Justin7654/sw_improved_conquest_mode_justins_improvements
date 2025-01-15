@@ -13996,7 +13996,6 @@ function tickSquadrons(game_ticks)
 							-- resupply ammo
 							reload(main_vehicle_id)
 						else
-							s.resetVehicleState(main_vehicle_id)
 							vehicle_object.is_resupply_on_load = true
 						end
 					end
@@ -14009,7 +14008,6 @@ function tickSquadrons(game_ticks)
 									-- resupply ammo
 									reload(main_vehicle_id)
 								else
-									s.resetVehicleState(main_vehicle_id)
 									vehicle_object.is_resupply_on_load = true
 								end
 							end
@@ -16144,6 +16142,7 @@ end
 -- Reloads all ammo containers on a vehicle, by just refilling them. Set the vehicle_id to the id of vehicle you want to reload.
 ---@param vehicle_id integer the vehicle you want to reload
 function reload(vehicle_id)
+	--Reload the main ammo containers
 	local i = 1
 	repeat
 		local ammo, success = server.getVehicleWeapon(vehicle_id, "Ammo "..i) -- get the number of ammo containers to reload
@@ -16152,6 +16151,21 @@ function reload(vehicle_id)
 		end
 		i = i + 1
 	until (not success)
+
+	--Reload any reserve ammo
+	local vehicle_component_data, components_is_success = server.getVehicleComponents(vehicle_id)
+	local target_pattern = ("^Reserve Ammo %d+$") --Must start with "Reserve Ammo ", then any amount of digits and must end with those digits
+	if components_is_success and vehicle_component_data.components and vehicle_component_data.components.guns then
+		--If the gun data exists
+		for reserve_ammo_index = 1, #vehicle_component_data.components.guns do
+			--Loops through all the guns on the vehicle
+			local reserve_ammo_data = vehicle_component_data.components.guns[reserve_ammo_index]
+			if reserve_ammo_data.ammo == 0 and reserve_ammo_data.name:match(target_pattern) then
+				--This is a reserve ammo and its out of ammo. Reload it to capacity
+				server.setVehicleWeapon(vehicle_id, reserve_ammo_data.pos.x, reserve_ammo_data.pos.y, reserve_ammo_data.pos.z, reserve_ammo_data.capacity)
+			end
+		end
+	end
 end
 
 --------------------------------------------------------------------------------
