@@ -3685,44 +3685,47 @@ function tickVision(game_ticks)
 
 		for squad_index, squad in pairs(g_savedata.ai_army.squadrons) do
 			if squad_index ~= RESUPPLY_SQUAD_INDEX then
-				-- reset target visibility state to investigate
+				--Squads targetting this player can bypass the throttling. That way, the target position keypads for AI vehicles stay updated
+				if isTickID(squad_index, 20) or (squad.target_vehicles[player_vehicle_id] ~= nil) then
+					-- reset target visibility state to investigate
 
-				if squad.target_vehicles[player_vehicle_id] ~= nil then
-					if player_vehicle.death_pos == nil then
-						squad.target_vehicles[player_vehicle_id].state = TARGET_VISIBILITY_INVESTIGATE
-					else
-						squad.target_vehicles[player_vehicle_id] = nil
-					end
-				end
-
-				-- check if target is visible to any vehicles
-				for vehicle_id, vehicle_object in pairs(squad.vehicles) do
-					local vehicle_transform = vehicle_object.transform
-
-					if vehicle_transform ~= nil and player_vehicle_transform ~= nil then
-						local distance = m.distance(player_vehicle_transform, vehicle_transform)
-
-						local local_vision_radius = vehicle_object.vision.radius
-
-						if not vehicle_object.vision.is_sonar and player_vehicle_transform[14] < -1 then
-							-- if the player is in the water, and the player is below y -1, then reduce the player's sight level depending on the player's depth
-							local_vision_radius = local_vision_radius * math.min(0.15 / (math.abs(player_vehicle_transform[14]) * 0.2), 0.15)
+					if squad.target_vehicles[player_vehicle_id] ~= nil then
+						if player_vehicle.death_pos == nil then
+							squad.target_vehicles[player_vehicle_id].state = TARGET_VISIBILITY_INVESTIGATE
+						else
+							squad.target_vehicles[player_vehicle_id] = nil
 						end
-						
-						if distance < local_vision_radius and player_vehicle.death_pos == nil then
-							if squad.target_vehicles[player_vehicle_id] == nil then
-								---@class TargetVehicle
-								squad.target_vehicles[player_vehicle_id] = {
-									state = TARGET_VISIBILITY_VISIBLE,
-									last_known_pos = player_vehicle_transform
-								}
-							else
-								local target_vehicle = squad.target_vehicles[player_vehicle_id]
-								target_vehicle.state = TARGET_VISIBILITY_VISIBLE
-								target_vehicle.last_known_pos = player_vehicle_transform
+					end
+
+					-- check if target is visible to any vehicles
+					for group_id, vehicle_object in pairs(squad.vehicles) do
+						local vehicle_transform = vehicle_object.transform
+
+						if vehicle_transform ~= nil and player_vehicle_transform ~= nil then
+							local distance = m.distance(player_vehicle_transform, vehicle_transform)
+
+							local local_vision_radius = vehicle_object.vision.radius
+
+							if not vehicle_object.vision.is_sonar and player_vehicle_transform[14] < -1 then
+								-- if the player is in the water, and the player is below y -1, then reduce the player's sight level depending on the player's depth
+								local_vision_radius = local_vision_radius * math.min(0.15 / (math.abs(player_vehicle_transform[14]) * 0.2), 0.15)
 							end
 
-							break
+							if distance < local_vision_radius and player_vehicle.death_pos == nil then
+								if squad.target_vehicles[player_vehicle_id] == nil then
+									---@class TargetVehicle
+									squad.target_vehicles[player_vehicle_id] = {
+										state = TARGET_VISIBILITY_VISIBLE,
+										last_known_pos = player_vehicle_transform
+									}
+								else
+									local target_vehicle = squad.target_vehicles[player_vehicle_id]
+									target_vehicle.state = TARGET_VISIBILITY_VISIBLE
+									target_vehicle.last_known_pos = player_vehicle_transform
+								end
+
+								break
+							end
 						end
 					end
 				end
@@ -3742,7 +3745,6 @@ function tickVision(game_ticks)
 		end
 	end
 
-	d.startProfiler("analysePlayers", true)
 	-- analyse players
 	for _, player in ipairs(s.getPlayers()) do
 		local player_steam_id = tostring(player.steam_id)
@@ -3783,10 +3785,8 @@ function tickVision(game_ticks)
 			end
 		end
 	end
-	d.stopProfiler("analysePlayers", true, "onTick()")
 
-
-	d.startProfiler("updateKeypads", true)
+	d.startProfiler("updKeypads", true)
 	-- update all of the keypads on the AI vehicles which are loaded
 	for _, squad in pairs(g_savedata.ai_army.squadrons) do
 		for vehicle_id, vehicle_object in pairs(squad.vehicles) do
@@ -3797,7 +3797,7 @@ function tickVision(game_ticks)
 			end
 		end
 	end
-	d.stopProfiler("updateKeypads", true, "onTick()")
+	d.stopProfiler("updKeypads", true, "onTick()")
 	d.stopProfiler("tickVision()", true, "onTick()")
 end
 
