@@ -1764,6 +1764,8 @@ function onVehicleLoad(vehicle_id)
 			vehicle_object.survivors = c.createAndSetCharactersIntoSeat(vehicle_id, c.valid_seats.enemy_ai)
 		end
 
+		local main_vehicle_id = VehicleGroup.getMainVehicle(group_id)
+
 		-- check to make sure no vehicles are too close, as this could result in them spawning inside each other
 		for _, checking_squad in pairs(g_savedata.ai_army.squadrons) do
 			for _, checking_vehicle_object in pairs(checking_squad.vehicles) do
@@ -1788,28 +1790,28 @@ function onVehicleLoad(vehicle_id)
 
 		--? check if this is a cargo vehicle, if so then set the cargo in its tanks
 		if g_savedata.cargo_vehicles[group_id] then
-			--* set the cargo in its tanks
+			if main_vehicle_id then
+				--* set the cargo in its tanks
+				local large_tank_capacity = 703.125
 
-			local large_tank_capacity = 703.125
+				for tank_set = 1, 3 do
+					for tank_id = 0, (vehicle_object.cargo.capacity/large_tank_capacity) - 1 do
 
-			for tank_set = 1, 3 do
-				for tank_id = 0, (vehicle_object.cargo.capacity/large_tank_capacity) - 1 do
+						Cargo.setTank(main_vehicle_id, "RESOURCE_TYPE_"..(tank_set-1).."_"..tank_id, g_savedata.cargo_vehicles[group_id].requested_cargo[tank_set].cargo_type, g_savedata.cargo_vehicles[group_id].requested_cargo[tank_set].amount/(vehicle_object.cargo.capacity/large_tank_capacity), true)
+					end
+					Cargo.setKeypad(main_vehicle_id, "RESOURCE_TYPE_"..(tank_set-1), g_savedata.cargo_vehicles[group_id].requested_cargo[tank_set].cargo_type)
 
-					Cargo.setTank(group_id, "RESOURCE_TYPE_"..(tank_set-1).."_"..tank_id, g_savedata.cargo_vehicles[group_id].requested_cargo[tank_set].cargo_type, g_savedata.cargo_vehicles[group_id].requested_cargo[tank_set].amount/(vehicle_object.cargo.capacity/large_tank_capacity), true)
+					d.print(("set %sL of %s into tank set %i on cargo vehicle %i"):format(g_savedata.cargo_vehicles[group_id].requested_cargo[tank_set].amount, g_savedata.cargo_vehicles[group_id].requested_cargo[tank_set].cargo_type, tank_set, group_id), true, 0)
 				end
-				Cargo.setKeypad(group_id, "RESOURCE_TYPE_"..(tank_set-1), g_savedata.cargo_vehicles[group_id].requested_cargo[tank_set].cargo_type)
-
-				d.print(("set %sL of %s into tank set %i on cargo vehicle %i"):format(g_savedata.cargo_vehicles[group_id].requested_cargo[tank_set].amount, g_savedata.cargo_vehicles[group_id].requested_cargo[tank_set].cargo_type, tank_set, group_id), true, 0)
+			else
+				d.print(("Could not find main_vehicle_id for cargo vehicle! group_id: %s"):format(group_id), true, 1)
 			end
 		end
 
 		if vehicle_object.is_resupply_on_load then
 			vehicle_object.is_resupply_on_load = false
 			
-			--Reset the vehicle state and reload
-			local main_vehicle_id = VehicleGroup.getMainVehicle(group_id)
-					
-			-- Ensure we got the main_vehicle_id
+			--Reset the vehicle state and reload					
 			if main_vehicle_id then
 				-- resetVehicleState current issues: it unseats all its crew, and other bodys inside it like missiles or torpedos will fall out or end up glitched inside it.
 				-- also only works when the vehicles loaded
