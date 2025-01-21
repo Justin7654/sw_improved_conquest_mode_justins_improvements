@@ -3678,10 +3678,6 @@ function tickVision(game_ticks)
 	end
 
 	-- analyse player vehicles
-	--[[
-		Issue: this is looping through each sub body on player vehicles, and then with a nested loop
-		looping through each AI vehicle causing lag
-	--]]
 	for player_vehicle_id, player_vehicle in pairs(g_savedata.player_vehicles) do
 		local player_vehicle_transform = player_vehicle.transform
 
@@ -3788,7 +3784,7 @@ function tickVision(game_ticks)
 		end
 	end
 
-	d.startProfiler("updKeypads", true)
+	d.startProfiler("updateKeypads", true)
 	-- update all of the keypads on the AI vehicles which are loaded
 	for _, squad in pairs(g_savedata.ai_army.squadrons) do
 		for vehicle_id, vehicle_object in pairs(squad.vehicles) do
@@ -3799,7 +3795,7 @@ function tickVision(game_ticks)
 			end
 		end
 	end
-	d.stopProfiler("updKeypads", true, "onTick()")
+	d.stopProfiler("updateKeypads", true, "onTick()")
 	d.stopProfiler("tickVision()", true, "onTick()")
 end
 
